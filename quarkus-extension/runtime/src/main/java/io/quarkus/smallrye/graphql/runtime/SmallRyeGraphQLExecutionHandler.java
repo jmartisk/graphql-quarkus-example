@@ -26,7 +26,8 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     private static final Logger LOG = Logger.getLogger(SmallRyeGraphQLExecutionHandler.class);
     
     private final SmallRyeGraphQLConfig smallRyeGraphQLConfig;
-
+   
+    
     public SmallRyeGraphQLExecutionHandler(SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
         this.smallRyeGraphQLConfig = smallRyeGraphQLConfig;
     }
@@ -41,6 +42,7 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
                 response.headers().set(HttpHeaders.ALLOW, getAllowedMethods());
                 break;
             case POST:
+                //request.
                 String postResponse = doRequest(ctx.getBodyAsString());
                 LOG.warn("********** postResponse = " + postResponse);
                 response.headers().set(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");

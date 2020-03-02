@@ -35,7 +35,7 @@ public class GraphQLTest {
         request.contentType(MEDIATYPE_TEXT);
         Response response = request.get("/graphql/schema.graphql");
         String body = response.body().asString();
-        
+        LOG.error(">>>>>>>>> schema " + body);
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertTrue(body.contains("\"Query root\""));
         Assertions.assertTrue(body.contains("type Query {"));
