@@ -11,10 +11,17 @@ import io.quarkus.test.QuarkusUnitTest;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Properties;
+import java.util.logging.Level;
 import javax.json.Json;
 import javax.json.JsonObject;
+import org.eclipse.microprofile.graphql.ConfigKey;
 import org.jboss.logging.Logger;
+import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.jupiter.api.Assertions;
 
 public class GraphQLTest {
@@ -24,8 +31,14 @@ public class GraphQLTest {
     static QuarkusUnitTest test = new QuarkusUnitTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(TestResource.class,TestPojo.class)
-                    .addAsResource(new StringAsset("quarkus.smallrye-graphql.allow-get=false"), "application.properties")
+                    .addAsResource(new StringAsset(getPropertyAsString()), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
+    
+    
+    
+    
+    
+    
     
     
     @Test
@@ -35,7 +48,6 @@ public class GraphQLTest {
         request.contentType(MEDIATYPE_TEXT);
         Response response = request.get("/graphql/schema.graphql");
         String body = response.body().asString();
-        LOG.error(">>>>>>>>> schema " + body);
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertTrue(body.contains("\"Query root\""));
         Assertions.assertTrue(body.contains("type Query {"));
@@ -63,8 +75,6 @@ public class GraphQLTest {
         String body = response.body().asString();
         LOG.error(">>>>>>>>> ping body " + body);
         
-        
-
     }
     
     private String getPayload(String query){
@@ -84,9 +94,24 @@ public class GraphQLTest {
         return Json.createObjectBuilder().add(QUERY, graphQL).add(VARIABLES, variables).build();
     }
     
+    private static String getPropertyAsString(){    
+        try {
+            StringWriter writer = new StringWriter();
+            PROPERTIES.store(writer,"TCK Properties");
+            return writer.toString();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
     private static final String MEDIATYPE_JSON = "application/json";
     private static final String MEDIATYPE_TEXT = "text/plain";
     private static final String QUERY = "query";
     private static final String VARIABLES = "variables";
     
+    private static final Properties PROPERTIES = new Properties();
+    static {
+        PROPERTIES.put("quarkus.smallrye-graphql.allow-get", "false");
+        PROPERTIES.put("quarkus.smallrye-graphql.print-data-fetcher-exception", "true");  
+    }
 }

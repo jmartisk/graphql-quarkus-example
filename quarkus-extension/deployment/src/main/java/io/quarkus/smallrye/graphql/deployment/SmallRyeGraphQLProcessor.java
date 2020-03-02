@@ -1,25 +1,29 @@
 package io.quarkus.smallrye.graphql.deployment;
 
 import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.SchemaPrinter;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.BeanArchiveIndexBuildItem;
 import io.quarkus.arc.deployment.BeanContainerListenerBuildItem;
-import io.quarkus.arc.runtime.BeanContainerListener;
+import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.test.TestResourceProvider;
 import io.quarkus.smallrye.graphql.runtime.ExecutionServiceProducer;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLRecorder;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
 import io.quarkus.vertx.http.runtime.HandlerType;
+import io.smallrye.graphql.bootstrap.Annotations;
 import io.smallrye.graphql.bootstrap.SmallRyeGraphQLBootstrap;
-import io.smallrye.graphql.execution.ExecutionService;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
+import java.util.ArrayList;
+import java.util.List;
+import javax.enterprise.context.RequestScoped;
+import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.jboss.logging.Logger;
 
@@ -38,31 +42,56 @@ public class SmallRyeGraphQLProcessor {
         return new FeatureBuildItem(FEATURE);
     }
     
-
     @BuildStep
-    AdditionalBeanBuildItem additionalBean(){
+    BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
+        LOG.info("=== additionalBeanDefiningAnnotation ===");
+        // Make ArC discover the beans marked with the @GraphQlApi qualifier
+        // TODO: Get the scope (if any)
+        return new BeanDefiningAnnotationBuildItem(Annotations.GRAPHQL_API,DotName.createSimple(RequestScoped.class.getName()),false);
+    }
+    
+    @BuildStep
+    List<AdditionalBeanBuildItem> additionalBean(){
         LOG.info("=== additional bean ===");
-        return AdditionalBeanBuildItem.unremovableOf(ExecutionServiceProducer.class);
+        List<AdditionalBeanBuildItem> additionalBeans = new ArrayList<>();
+        additionalBeans.add(AdditionalBeanBuildItem.unremovableOf(ExecutionServiceProducer.class));
+//        additionalBeans.add(AdditionalBeanBuildItem.unremovableOf("io.quarkus.smallrye.graphql.deployment.TestResource"));
+        return additionalBeans;
+    }
+    
+    @BuildStep
+    GraphQLSchemaBuildItem index(BeanArchiveIndexBuildItem beanArchiveIndexBuildItem) {
+        LOG.info("=== index ===");
+        IndexView index = beanArchiveIndexBuildItem.getIndex();
+        SmallRyeGraphQLBootstrap bootstrap = new SmallRyeGraphQLBootstrap();
+        GraphQLSchema graphQLSchema = bootstrap.bootstrap(index);
+        return new GraphQLSchemaBuildItem(graphQLSchema);
     }
     
     @Record(ExecutionTime.RUNTIME_INIT)
     @BuildStep
-    void build(BeanArchiveIndexBuildItem beanArchiveIndexBuildItem,
+    void build(GraphQLSchemaBuildItem graphQLSchemaBuildItem,
             SmallRyeGraphQLRecorder recorder,
             SmallRyeGraphQLConfig smallRyeGraphQLConfig,
             BuildProducer<BeanContainerListenerBuildItem> containerListenerProducer,
             BuildProducer<RouteBuildItem> routes) {
       
+        String schema = graphQLSchemaBuildItem.getGraphQLSchemaAsString();
+        recorder.createExecutionServiceProducer(smallRyeGraphQLConfig);
         
-        IndexView index = beanArchiveIndexBuildItem.getIndex();
-        SmallRyeGraphQLBootstrap bootstrap = new SmallRyeGraphQLBootstrap();
-        GraphQLSchema graphQLSchema = bootstrap.bootstrap(index);
-        String schema = schemaPrinter.print(graphQLSchema);
+//        GraphQLSchema graphQLSchema = graphQLSchemaBuildItem.getGraphQLSchema();
         
-        //LOG.info("=== record bean producer ===");
-        //containerListenerProducer.produce(
-        //        new BeanContainerListenerBuildItem(recorder.createExecutionServiceProducer(smallRyeGraphQLConfig, schema)));
-        recorder.createExecutionServiceProducer(smallRyeGraphQLConfig, schema);
+//        LOG.error(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> allTypes");
+//        List<GraphQLNamedType> allTypes = graphQLSchema.getAllTypesAsList();
+//        for(GraphQLNamedType graphQLType: allTypes){
+//            LOG.error(graphQLType);
+//        }
+//        
+//        LOG.error(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> codeRegistry");
+//        GraphQLCodeRegistry codeRegistry = graphQLSchema.getCodeRegistry();
+//        LOG.error(codeRegistry.);
+        
+        
         
         LOG.info("=== record routers ===");
         Handler<RoutingContext> schemaHandler = recorder.schemaHandler(schema);
@@ -73,14 +102,6 @@ public class SmallRyeGraphQLProcessor {
     }
     
     private final String rootPath = "/graphql"; // TODO: Move to config
-    private final SchemaPrinter schemaPrinter = new SchemaPrinter();
     
-    
-//    @BuildStep
-//    BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
-//        LOG.info("=== additionalBeanDefiningAnnotation ===");
-//        // Make ArC discover the beans marked with the @GraphQlApi qualifier
-//        // TODO: Get the scope (if any)
-//        return new BeanDefiningAnnotationBuildItem(Annotations.GRAPHQL_API,DotName.createSimple(RequestScoped.class.getName()),false);
-//    }
+
 }

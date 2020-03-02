@@ -14,9 +14,8 @@ import org.jboss.logging.Logger;
 public class SmallRyeGraphQLRecorder {
     private static final Logger LOG = Logger.getLogger(SmallRyeGraphQLRecorder.class);
   
-    public void createExecutionServiceProducer(SmallRyeGraphQLConfig smallRyeGraphQLConfig,String graphQLSchema) {
+    public void createExecutionServiceProducer(SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
         ExecutionServiceProducer producer = CDI.current().select(ExecutionServiceProducer.class).get();
-        producer.setGraphQLSchema(graphQLSchema);
         producer.setSmallRyeGraphQLConfig(smallRyeGraphQLConfig);
         
     }
