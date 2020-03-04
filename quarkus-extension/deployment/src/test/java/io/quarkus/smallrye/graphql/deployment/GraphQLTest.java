@@ -43,7 +43,7 @@ public class GraphQLTest {
         String body = response.body().asString();
         LOG.error(body);
 
-                Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertEquals(200, response.statusCode());
         Assertions.assertTrue(body.contains("\"Query root\""));
         Assertions.assertTrue(body.contains("type Query {"));
         Assertions.assertTrue(body.contains("ping: TestPojo"));
