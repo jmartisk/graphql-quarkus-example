@@ -78,7 +78,7 @@ public class GraphQLTest {
         "    message\n" +
         "  }\n" +
         "}");
-        
+                
         RestAssured.given().when()
                 .accept(MEDIATYPE_JSON)
                 .contentType(MEDIATYPE_JSON)
