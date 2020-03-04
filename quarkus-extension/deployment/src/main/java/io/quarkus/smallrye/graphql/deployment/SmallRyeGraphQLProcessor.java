@@ -13,6 +13,7 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLRecorder;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
+import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
 import io.quarkus.vertx.http.runtime.HandlerType;
 import io.smallrye.graphql.bootstrap.Annotations;
 import io.smallrye.graphql.bootstrap.SmallRyeGraphQLBootstrap;
@@ -70,7 +71,6 @@ public class SmallRyeGraphQLProcessor {
         
         Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.NORMAL));
-        
     }
     
     private static final SchemaPrinter SCHEMA_PRINTER;

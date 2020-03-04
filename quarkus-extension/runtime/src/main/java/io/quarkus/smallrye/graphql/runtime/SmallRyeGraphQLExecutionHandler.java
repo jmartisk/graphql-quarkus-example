@@ -7,6 +7,7 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -36,14 +37,16 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     public void handle(final RoutingContext ctx) {
         HttpServerRequest request = ctx.request();
         HttpServerResponse response = ctx.response();
+        
         response.headers().set(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");
+        
         switch (request.method()) {
             case OPTIONS:
                 response.headers().set(HttpHeaders.ALLOW, getAllowedMethods());
                 break;
             case POST:
+                // Why does ctx.getBodyAsString not work ?
                 String postResponse = doRequest(ctx.getBodyAsString());
-                
                 response.setStatusCode(200).end(Buffer.buffer(postResponse));
                 break;
             case GET:
