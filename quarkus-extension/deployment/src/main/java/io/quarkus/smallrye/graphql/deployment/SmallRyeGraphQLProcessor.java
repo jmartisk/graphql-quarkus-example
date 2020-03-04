@@ -12,6 +12,7 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLRecorder;
+import io.quarkus.vertx.http.deployment.RequireBodyHandlerBuildItem;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
 import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
 import io.quarkus.vertx.http.runtime.HandlerType;
@@ -21,6 +22,7 @@ import io.smallrye.graphql.execution.ExecutionService;
 import io.smallrye.graphql.execution.GraphQLConfig;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import javax.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
@@ -53,24 +55,26 @@ public class SmallRyeGraphQLProcessor {
 
     @Record(ExecutionTime.RUNTIME_INIT)
     @BuildStep
-    void build(CombinedIndexBuildItem combinedIndex,
+    RequireBodyHandlerBuildItem build(CombinedIndexBuildItem combinedIndex,
             SmallRyeGraphQLRecorder recorder,
             SmallRyeGraphQLConfig smallRyeGraphQLConfig,
             BuildProducer<RouteBuildItem> routes) {
-      
+
         IndexView index = combinedIndex.getIndex();
-        
+
         SmallRyeGraphQLBootstrap bootstrap = new SmallRyeGraphQLBootstrap();
         GraphQLSchema graphQLSchema = bootstrap.bootstrap(index);
-        
+
         String schema = SCHEMA_PRINTER.print(graphQLSchema);
         recorder.createExecutionService(smallRyeGraphQLConfig);
-        
+
         Handler<RoutingContext> schemaHandler = recorder.schemaHandler(schema);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.NORMAL));
-        
+
         Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.NORMAL));
+
+        return new RequireBodyHandlerBuildItem();
     }
     
     private static final SchemaPrinter SCHEMA_PRINTER;

@@ -7,7 +7,6 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -28,7 +27,6 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     
     private final SmallRyeGraphQLConfig smallRyeGraphQLConfig;
    
-    
     public SmallRyeGraphQLExecutionHandler(SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
         this.smallRyeGraphQLConfig = smallRyeGraphQLConfig;
     }
@@ -45,15 +43,14 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
                 response.headers().set(HttpHeaders.ALLOW, getAllowedMethods());
                 break;
             case POST:
-                // Why does ctx.getBodyAsString not work ?
-                String postResponse = doRequest(ctx.getBodyAsString());
+                String postResponse = doRequest(ctx.getBodyAsString().getBytes());
                 response.setStatusCode(200).end(Buffer.buffer(postResponse));
                 break;
             case GET:
                 if(smallRyeGraphQLConfig.allowGet){
                     List<String> queries = ctx.queryParam(QUERY);
                     if(queries!=null && !queries.isEmpty()){
-                        String getResponse = doRequest(queries.get(0));
+                        String getResponse = doRequest(queries.get(0).getBytes());
                         response.setStatusCode(200).end(Buffer.buffer(getResponse));
                     }else{
                         response.setStatusCode(204).setStatusMessage("Provide a query parameter").end();
@@ -74,16 +71,6 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
         }
     }
     
-    private String doRequest(String body){
-        
-        if(body==null || body.isEmpty()){
-            // Hack for POST for now
-            body = dummyBody();
-            LOG.warn("********** dummy body = " + body);
-        }   
-        return doRequest(body.getBytes());
-    }
-    
     private String doRequest(final byte[] body){
         try (ByteArrayInputStream input = new ByteArrayInputStream(body);
             final JsonReader jsonReader = Json.createReader(input)){
@@ -101,42 +88,7 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
             throw new RuntimeException("Response is null");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
-        }
-        
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // Hardcoded 
-    private String dummyBody(){
-        return getPayload("{\n" +
-        "  ping {\n" +
-        "    message\n" +
-        "  }\n" +
-        "}");
-    }
-    
-    private String getPayload(String query){
-        JsonObject jsonObject = createRequestBody(query);
-        return jsonObject.toString();   
-    }
-    
-    private JsonObject createRequestBody(String graphQL){
-        return createRequestBody(graphQL, null);
-    }
-    
-    private JsonObject createRequestBody(String graphQL, JsonObject variables){
-        // Create the request
-        if(variables==null || variables.isEmpty()) {
-            variables = Json.createObjectBuilder().build();
-        }
-        return Json.createObjectBuilder().add(QUERY, graphQL).add(VARIABLES, variables).build();
+        }    
     }
     
     private static final String QUERY = "query";
