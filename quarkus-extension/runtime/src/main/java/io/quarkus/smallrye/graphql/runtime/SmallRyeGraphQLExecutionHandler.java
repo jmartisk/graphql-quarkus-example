@@ -7,8 +7,8 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
@@ -43,14 +43,14 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
                 response.headers().set(HttpHeaders.ALLOW, getAllowedMethods());
                 break;
             case POST:
-                String postResponse = doRequest(ctx.getBodyAsString().getBytes());
+                String postResponse = doRequest(ctx.getBodyAsString());
                 response.setStatusCode(200).end(Buffer.buffer(postResponse));
                 break;
             case GET:
                 if(smallRyeGraphQLConfig.allowGet){
                     List<String> queries = ctx.queryParam(QUERY);
                     if(queries!=null && !queries.isEmpty()){
-                        String getResponse = doRequest(queries.get(0).getBytes());
+                        String getResponse = doRequest(queries.get(0));
                         response.setStatusCode(200).end(Buffer.buffer(getResponse));
                     }else{
                         response.setStatusCode(204).setStatusMessage("Provide a query parameter").end();
@@ -71,8 +71,8 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
         }
     }
     
-    private String doRequest(final byte[] body){
-        try (ByteArrayInputStream input = new ByteArrayInputStream(body);
+    private String doRequest(final String body){
+        try (StringReader input = new StringReader(body);
             final JsonReader jsonReader = Json.createReader(input)){
             JsonObject jsonInput = jsonReader.readObject();
             ExecutionService executionService = CDI.current().select(ExecutionService.class).get();
@@ -92,6 +92,5 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     }
     
     private static final String QUERY = "query";
-    private static final String VARIABLES = "variables";
     
 }
