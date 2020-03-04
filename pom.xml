@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>com.github.phillip-kruger.graphql</groupId>
+    <artifactId>graphql-quarkus-example-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    
+    <name>GraphQL Quarkus Demo</name>
+    
+    <url>https://github.com/phillip-kruger/graphql-quarkus-example</url>
+    <description>Example application to demonstrate MicroPrfile GraphQL in Quarkus</description>
+    
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    
+    <scm>
+        <connection>scm:git:https://github.com/phillip-kruger/graphql-quarkus-example.git</connection>
+        <url>https://github.com/phillip-kruger/graphql-quarkus-example</url>
+    </scm>
+
+    <distributionManagement>
+        <site>
+            <id>wiki</id>
+            <url>https://github.com/phillip-kruger/graphql-quarkus-example/wiki</url>
+        </site>
+        
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    
+    </distributionManagement>
+
+    <developers>
+        <developer>
+            <name>Phillip Kruger</name>
+            <email>phillip.kruger@redhat.com</email>
+            <organizationUrl>http://www.phillip-kruger.com</organizationUrl>
+        </developer>
+    </developers>
+    
+    <modules>
+        <module>quarkus-extension</module>
+        <module>example</module>
+    </modules>
+    
+</project>

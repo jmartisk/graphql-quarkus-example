@@ -14,16 +14,17 @@ import io.restassured.specification.RequestSpecification;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Properties;
-import java.util.logging.Level;
 import javax.json.Json;
 import javax.json.JsonObject;
-import org.eclipse.microprofile.graphql.ConfigKey;
+import org.hamcrest.CoreMatchers;
 import org.jboss.logging.Logger;
-import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.jupiter.api.Assertions;
 
+/**
+ * Basic tests. POST and GET
+ * @author Phillip Kruger (phillip.kruger@redhat.com)
+ */
 public class GraphQLTest {
     private static final Logger LOG = Logger.getLogger(GraphQLTest.class);
     
@@ -34,13 +35,6 @@ public class GraphQLTest {
                     .addAsResource(new StringAsset(getPropertyAsString()), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
     
-    
-    
-    
-    
-    
-    
-    
     @Test
     public void testSchema(){
         RequestSpecification request = RestAssured.given();
@@ -48,6 +42,8 @@ public class GraphQLTest {
         request.contentType(MEDIATYPE_TEXT);
         Response response = request.get("/graphql/schema.graphql");
         String body = response.body().asString();
+        LOG.error(body);
+        
         Assertions.assertEquals(200, response.statusCode());
         Assertions.assertTrue(body.contains("\"Query root\""));
         Assertions.assertTrue(body.contains("type Query {"));
@@ -55,26 +51,44 @@ public class GraphQLTest {
     }
     
     @Test 
-    public void testPing() {
+    public void testPost() {
         
-        String payload = getPayload("{\n" +
+        String pingRequest = getPayload("{\n" +
         "  ping {\n" +
         "    message\n" +
         "  }\n" +
         "}");
         
-        Response response = RestAssured.given().when()
+        RestAssured.given().when()
                 .accept(MEDIATYPE_JSON)
                 .contentType(MEDIATYPE_JSON)
-                .body(payload)
-                .post("/graphql");
-                //.then()
-                //.assertThat()
-                //.statusCode(200);
-        LOG.error(">>>>>>>>> ping status " + response.statusCode());
-        String body = response.body().asString();
-        LOG.error(">>>>>>>>> ping body " + body);
+                .body(pingRequest)
+                .post("/graphql")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .and()
+                .body(CoreMatchers.containsString("{\"data\":{\"ping\":{\"message\":\"pong\"}}}"));
+    }
+    
+    @Test 
+    public void testGet() {
+        String fooRequest = getPayload("{\n" +
+        "  foo {\n" +
+        "    message\n" +
+        "  }\n" +
+        "}");
         
+        RestAssured.given().when()
+                .accept(MEDIATYPE_JSON)
+                .contentType(MEDIATYPE_JSON)
+                .queryParam("query",fooRequest)
+                .get("/graphql")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .and()
+                .body(CoreMatchers.containsString("{\"data\":{\"foo\":{\"message\":\"bar\"}}}"));
     }
     
     private String getPayload(String query){
@@ -111,7 +125,7 @@ public class GraphQLTest {
     
     private static final Properties PROPERTIES = new Properties();
     static {
-        PROPERTIES.put("quarkus.smallrye-graphql.allow-get", "false");
+        PROPERTIES.put("quarkus.smallrye-graphql.allow-get", "true");
         PROPERTIES.put("quarkus.smallrye-graphql.print-data-fetcher-exception", "true");  
     }
 }

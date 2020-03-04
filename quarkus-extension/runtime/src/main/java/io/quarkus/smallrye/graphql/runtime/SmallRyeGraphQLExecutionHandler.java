@@ -19,7 +19,7 @@ import javax.json.JsonWriter;
 import org.jboss.logging.Logger;
 
 /**
- * Handler that return the execution
+ * Handler that does the execution of GraphQL Requests
  * @author Phillip Kruger (phillip.kruger@redhat.com)
  */
 public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> {
@@ -34,18 +34,16 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     
     @Override
     public void handle(final RoutingContext ctx) {
-        LOG.error(">>>>>>>>> Handling execution !");
         HttpServerRequest request = ctx.request();
         HttpServerResponse response = ctx.response();
+        response.headers().set(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");
         switch (request.method()) {
             case OPTIONS:
                 response.headers().set(HttpHeaders.ALLOW, getAllowedMethods());
                 break;
             case POST:
-                //request.
                 String postResponse = doRequest(ctx.getBodyAsString());
-                LOG.warn("********** postResponse = " + postResponse);
-                response.headers().set(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");
+                
                 response.setStatusCode(200).end(Buffer.buffer(postResponse));
                 break;
             case GET:
@@ -53,8 +51,6 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
                     List<String> queries = ctx.queryParam(QUERY);
                     if(queries!=null && !queries.isEmpty()){
                         String getResponse = doRequest(queries.get(0));
-                        LOG.warn("********** getResponse = " + getResponse);
-                        response.headers().set(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8");
                         response.setStatusCode(200).end(Buffer.buffer(getResponse));
                     }else{
                         response.setStatusCode(204).setStatusMessage("Provide a query parameter").end();
@@ -76,23 +72,24 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     }
     
     private String doRequest(String body){
-        LOG.warn("********** real body = " + body);
+        
         if(body==null || body.isEmpty()){
+            // Hack for POST for now
             body = dummyBody();
-        }   LOG.warn("********** dummy body = " + body);
+            LOG.warn("********** dummy body = " + body);
+        }   
         return doRequest(body.getBytes());
     }
     
     private String doRequest(final byte[] body){
-        //boolean activated = RequestScopeHelper.activeRequestScope();
-        try (ByteArrayInputStream input = new ByteArrayInputStream(body)) {
-            final JsonReader jsonReader = Json.createReader(input);
+        try (ByteArrayInputStream input = new ByteArrayInputStream(body);
+            final JsonReader jsonReader = Json.createReader(input)){
             JsonObject jsonInput = jsonReader.readObject();
             ExecutionService executionService = CDI.current().select(ExecutionService.class).get();
             JsonObject outputJson = executionService.execute(jsonInput);
             if (outputJson != null) {
-                try (StringWriter output = new StringWriter()) {
-                    final JsonWriter jsonWriter = Json.createWriter(output);
+                try (StringWriter output = new StringWriter();
+                    final JsonWriter jsonWriter = Json.createWriter(output)){
                     jsonWriter.writeObject(outputJson);
                     output.flush();
                     return output.toString();
@@ -101,10 +98,6 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
             throw new RuntimeException("Response is null");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
-        } finally {
-            //if (activated) {
-            //    Arc.container().requestContext().terminate();
-            //}
         }
         
     }

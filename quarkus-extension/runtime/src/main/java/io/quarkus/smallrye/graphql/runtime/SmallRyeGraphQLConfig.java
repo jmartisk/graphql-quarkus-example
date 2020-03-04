@@ -4,10 +4,19 @@ import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import java.util.List;
-
+/**
+ * GraphQL Config
+ * @author Phillip Kruger (phillip.kruger@redhat.com)
+ */
 @ConfigRoot(name = "smallrye-graphql",phase = ConfigPhase.BUILD_AND_RUN_TIME_FIXED)
 public class SmallRyeGraphQLConfig {
 
+    /**
+     * The rootPath under which queries will be served. Default to /graphql
+     */
+    @ConfigItem(defaultValue = "/graphql")
+    public String rootPath;
+    
     /**
      * Enable queries over HTTP GET. Default to false (POST only)
      */

@@ -13,6 +13,11 @@ import org.eclipse.microprofile.graphql.Query;
 public class TestResource {
     @Query
     public TestPojo ping() {
-        return new TestPojo("ping");
+        return new TestPojo("pong");
+    }
+    
+    @Query
+    public TestPojo foo() {
+        return new TestPojo("bar");
     }
 }

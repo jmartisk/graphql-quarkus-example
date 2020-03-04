@@ -14,6 +14,7 @@ import io.vertx.ext.web.RoutingContext;
  */
 public class SmallRyeGraphQLSchemaHandler implements Handler<RoutingContext> {
     private static final String ALLOWED_METHODS = "GET, OPTIONS";
+    private static final String CONTENT_TYPE = "text/plain; charset=UTF-8";
     private final String schema;
             
     public SmallRyeGraphQLSchemaHandler(String graphQLSchema){ 
@@ -27,7 +28,7 @@ public class SmallRyeGraphQLSchemaHandler implements Handler<RoutingContext> {
         if (request.method().equals(HttpMethod.OPTIONS)) {
             response.headers().set(HttpHeaders.ALLOW, ALLOWED_METHODS);
         } else if (request.method().equals(HttpMethod.GET)) {
-            response.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+            response.headers().set(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
             response.end(Buffer.buffer(schema));
         }
     }
