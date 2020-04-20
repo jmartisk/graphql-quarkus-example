@@ -1,7 +1,6 @@
 package io.quarkus.smallrye.graphql.deployment;
 
 import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.SchemaPrinter;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -10,19 +9,19 @@ import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.smallrye.graphql.runtime.ExecutionServiceProducer;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLRecorder;
 import io.quarkus.vertx.http.deployment.RequireBodyHandlerBuildItem;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
-import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
 import io.quarkus.vertx.http.runtime.HandlerType;
-import io.smallrye.graphql.bootstrap.Annotations;
-import io.smallrye.graphql.bootstrap.SmallRyeGraphQLBootstrap;
+import io.smallrye.graphql.bootstrap.Config;
 import io.smallrye.graphql.execution.ExecutionService;
-import io.smallrye.graphql.execution.GraphQLConfig;
+import io.smallrye.graphql.schema.Annotations;
+import io.smallrye.graphql.schema.SchemaBuilder;
+import io.smallrye.graphql.schema.model.Schema;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
 import javax.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
@@ -39,21 +38,22 @@ public class SmallRyeGraphQLProcessor {
         return new FeatureBuildItem(FEATURE);
     }
     
-    @BuildStep
-    BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
-        // Make ArC discover the beans marked with the @GraphQlApi qualifier
-        return new BeanDefiningAnnotationBuildItem(Annotations.GRAPHQL_API,DotName.createSimple(ApplicationScoped.class.getName()));
-    }
-    
-    @BuildStep
-    AdditionalBeanBuildItem additionalBean(){
-        return AdditionalBeanBuildItem.builder()
-                .addBeanClass(ExecutionService.class)
-                .addBeanClass(GraphQLConfig.class)
-                .setUnremovable().build();
-    }
+//    @BuildStep
+//    BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
+//        // Make ArC discover the beans marked with the @GraphQlApi qualifier
+//        return new BeanDefiningAnnotationBuildItem(Annotations.GRAPHQL_API,DotName.createSimple(ApplicationScoped.class.getName()));
+//    }
+//    
+//    @BuildStep
+//    AdditionalBeanBuildItem additionalBean(){
+//        return AdditionalBeanBuildItem.builder()
+//                .addBeanClass(ExecutionServiceProducer.class)
+//                .setUnremovable().build();
+//    }
 
-    @Record(ExecutionTime.RUNTIME_INIT)
+    
+    
+    @Record(ExecutionTime.STATIC_INIT)
     @BuildStep
     RequireBodyHandlerBuildItem build(CombinedIndexBuildItem combinedIndex,
             SmallRyeGraphQLRecorder recorder,
@@ -61,33 +61,17 @@ public class SmallRyeGraphQLProcessor {
             BuildProducer<RouteBuildItem> routes) {
 
         IndexView index = combinedIndex.getIndex();
+        Schema schema = SchemaBuilder.build(index);
+        
+        recorder.createExecutionService(smallRyeGraphQLConfig, schema);
+        
+//        Handler<RoutingContext> schemaHandler = recorder.schemaHandler();
+//        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.NORMAL));
 
-        SmallRyeGraphQLBootstrap bootstrap = new SmallRyeGraphQLBootstrap();
-        GraphQLSchema graphQLSchema = bootstrap.bootstrap(index);
-
-        String schema = SCHEMA_PRINTER.print(graphQLSchema);
-        recorder.createExecutionService(smallRyeGraphQLConfig);
-
-        Handler<RoutingContext> schemaHandler = recorder.schemaHandler(schema);
-        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.NORMAL));
-
-        Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig);
+        Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig.allowGet);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.NORMAL));
 
         return new RequireBodyHandlerBuildItem();
     }
     
-    private static final SchemaPrinter SCHEMA_PRINTER;
-    static {
-        SchemaPrinter.Options options = SchemaPrinter.Options.defaultOptions();
-        options = options.descriptionsAsHashComments(false);
-        options = options.includeDirectives(false);
-        options = options.includeExtendedScalarTypes(false);
-        options = options.includeIntrospectionTypes(false);
-        options = options.includeScalarTypes(false);
-        options = options.includeSchemaDefinition(false);
-        options = options.useAstDefinitions(false);
-        SCHEMA_PRINTER = new SchemaPrinter(options);
-    }
-
 }

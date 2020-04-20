@@ -34,7 +34,7 @@ public class GraphQLTest {
                     .addAsResource(new StringAsset(getPropertyAsString()), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
     
-    @Test
+    //@Test
     public void testSchema(){
         RequestSpecification request = RestAssured.given();
         request.accept(MEDIATYPE_TEXT);
@@ -70,7 +70,7 @@ public class GraphQLTest {
                 .body(CoreMatchers.containsString("{\"data\":{\"ping\":{\"message\":\"pong\"}}}"));
     }
     
-    @Test 
+    //@Test 
     public void testGet() {
         String fooRequest = getPayload("{\n" +
         "  foo {\n" +

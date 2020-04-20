@@ -4,6 +4,7 @@ import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import java.util.List;
+
 /**
  * GraphQL Config
  * @author Phillip Kruger (phillip.kruger@redhat.com)
@@ -41,6 +42,11 @@ public class SmallRyeGraphQLConfig {
     @ConfigItem(defaultValue = "Server Error")
     public String defaultErrorMessage;
 
+    /**
+     * Enable metrics
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean metricsEnabled;
     
     /**
      * Print detailed error messages in the log when data fetching has failed. Default to false.

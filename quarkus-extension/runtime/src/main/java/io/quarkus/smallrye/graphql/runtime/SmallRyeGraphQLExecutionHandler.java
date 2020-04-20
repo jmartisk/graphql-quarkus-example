@@ -1,6 +1,5 @@
 package io.quarkus.smallrye.graphql.runtime;
 
-import io.smallrye.graphql.execution.ExecutionService;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
@@ -17,6 +16,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import org.jboss.logging.Logger;
+import io.smallrye.graphql.execution.ExecutionService;
 
 /**
  * Handler that does the execution of GraphQL Requests
@@ -25,14 +25,15 @@ import org.jboss.logging.Logger;
 public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> {
     private static final Logger LOG = Logger.getLogger(SmallRyeGraphQLExecutionHandler.class);
     
-    private final SmallRyeGraphQLConfig smallRyeGraphQLConfig;
-   
-    public SmallRyeGraphQLExecutionHandler(SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
-        this.smallRyeGraphQLConfig = smallRyeGraphQLConfig;
+    private static boolean allowGet = false;
+    
+    public SmallRyeGraphQLExecutionHandler(boolean allowGet) {
+        this.allowGet = allowGet;
     }
     
     @Override
     public void handle(final RoutingContext ctx) {
+        LOG.error("===== Executing operation =====");
         HttpServerRequest request = ctx.request();
         HttpServerResponse response = ctx.response();
         
@@ -47,7 +48,7 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
                 response.setStatusCode(200).end(Buffer.buffer(postResponse));
                 break;
             case GET:
-                if(smallRyeGraphQLConfig.allowGet){
+                if(allowGet){
                     List<String> queries = ctx.queryParam(QUERY);
                     if(queries!=null && !queries.isEmpty()){
                         String getResponse = doRequest(queries.get(0));
@@ -64,7 +65,7 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     }
     
     private String getAllowedMethods(){
-        if(smallRyeGraphQLConfig.allowGet){
+        if(allowGet){
             return "GET, POST, OPTIONS";
         }else{
             return "POST, OPTIONS";

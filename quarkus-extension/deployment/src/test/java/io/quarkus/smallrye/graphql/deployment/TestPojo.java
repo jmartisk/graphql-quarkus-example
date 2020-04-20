@@ -5,7 +5,7 @@ package io.quarkus.smallrye.graphql.deployment;
  * @author Phillip Kruger (phillip.kruger@redhat.com)
  */
 public class TestPojo {
-    String message;
+    private String message;
 
     public TestPojo(){
         super();
