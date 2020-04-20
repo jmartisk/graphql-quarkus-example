@@ -20,18 +20,20 @@ public class ExecutionServiceProducer {
     private Schema schema;
     private Config config;
     
-    public void setSchema(Schema schema){
+    void setSchema(Schema schema){
         this.schema = schema;
     }
     
-    public void setConfig(Config config){
+    void setConfig(Config config){
         this.config = config;
     }
     
-    @Produces @ApplicationScoped
-    public ExecutionService produceExecutionService(){
+    void initialize() {
         LOG.error(">>>>> Creating execution service <<<<<<");
         GraphQLSchema graphQLSchema = Bootstrap.bootstrap(schema);
-        return new ExecutionService(config, graphQLSchema);
+        this.executionService = new ExecutionService(config, graphQLSchema);
     }
+    
+    @Produces
+    ExecutionService executionService;
 }
