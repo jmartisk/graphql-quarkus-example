@@ -1,41 +1,47 @@
 package io.quarkus.smallrye.graphql.runtime;
 
 import graphql.schema.GraphQLSchema;
+import io.quarkus.arc.Arc;
 import io.quarkus.runtime.annotations.Recorder;
 import io.smallrye.graphql.execution.ExecutionService;
 import io.smallrye.graphql.bootstrap.Config;
 import io.smallrye.graphql.schema.model.Schema;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
+
 import java.util.List;
 import javax.enterprise.inject.spi.CDI;
+
 import org.jboss.logging.Logger;
 
 /**
  * Recorder
+ *
  * @author Phillip Kruger (phillip.kruger@redhat.com)
  */
 @Recorder
 public class SmallRyeGraphQLRecorder {
     private static final Logger LOG = Logger.getLogger(SmallRyeGraphQLRecorder.class);
-  
-    public void createExecutionService(SmallRyeGraphQLConfig smallRyeGraphQLConfig,Schema schema){
-        ExecutionServiceProducer executionServiceProducer = CDI.current().select(ExecutionServiceProducer.class).get();
+
+    public void createExecutionService(SmallRyeGraphQLConfig smallRyeGraphQLConfig, Schema schema) {
+        Arc.initialize();     // FIXME: why do I need this?
+        ExecutionServiceProducer executionServiceProducer = Arc.container()
+                .instance(ExecutionServiceProducer.class)
+                .get();
         executionServiceProducer.setConfig(toConfig(smallRyeGraphQLConfig));
         executionServiceProducer.setSchema(schema);
-        
-        CDI.current().select(ExecutionService.class).get();
+        executionServiceProducer.initialize();
     }
-    
+
     public Handler<RoutingContext> executionHandler(boolean allowGet) {
-        return new SmallRyeGraphQLExecutionHandler(allowGet);     
+        return new SmallRyeGraphQLExecutionHandler(allowGet);
     }
-    
+
     public Handler<RoutingContext> schemaHandler() {
-        return new SmallRyeGraphQLSchemaHandler();     
+        return new SmallRyeGraphQLSchemaHandler();
     }
-    
-    private Config toConfig(SmallRyeGraphQLConfig smallRyeGraphQLConfig){
+
+    private Config toConfig(SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
         return new Config() {
             @Override
             public String getDefaultErrorMessage() {
@@ -66,7 +72,7 @@ public class SmallRyeGraphQLRecorder {
             public boolean isMetricsEnabled() {
                 return smallRyeGraphQLConfig.metricsEnabled;
             }
-            
+
         };
     }
 }

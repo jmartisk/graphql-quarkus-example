@@ -5,9 +5,10 @@ import io.smallrye.graphql.bootstrap.Bootstrap;
 import io.smallrye.graphql.bootstrap.Config;
 import io.smallrye.graphql.execution.ExecutionService;
 import io.smallrye.graphql.schema.model.Schema;
+import org.jboss.logging.Logger;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
-import org.jboss.logging.Logger;
 
 /**
  * Proxy the execution service
@@ -20,18 +21,21 @@ public class ExecutionServiceProducer {
     private Schema schema;
     private Config config;
     
-    public void setSchema(Schema schema){
+    void setSchema(Schema schema){
         this.schema = schema;
     }
     
-    public void setConfig(Config config){
+    void setConfig(Config config){
         this.config = config;
     }
-    
-    @Produces @ApplicationScoped
-    public ExecutionService produceExecutionService(){
+
+    void initialize() {
         LOG.error(">>>>> Creating execution service <<<<<<");
         GraphQLSchema graphQLSchema = Bootstrap.bootstrap(schema);
-        return new ExecutionService(config, graphQLSchema);
+        executionService = new ExecutionService(config, graphQLSchema);
     }
+
+    @Produces
+    ExecutionService executionService;
+    
 }
