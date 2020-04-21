@@ -1,5 +1,7 @@
 package io.quarkus.smallrye.graphql.runtime;
 
+import graphql.schema.GraphQLSchema;
+import io.smallrye.graphql.execution.SchemaPrinter;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
@@ -7,6 +9,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
+import javax.enterprise.inject.spi.CDI;
 
 /**
  * Handler that return the generated schema
@@ -18,14 +21,16 @@ public class SmallRyeGraphQLSchemaHandler implements Handler<RoutingContext> {
     
     @Override
     public void handle(RoutingContext event) {
+        GraphQLSchema graphQLSchema = CDI.current().select(GraphQLSchema.class).get();
+        String schemaString = SchemaPrinter.print(graphQLSchema);
+        
         HttpServerRequest request = event.request();
         HttpServerResponse response = event.response();
         if (request.method().equals(HttpMethod.OPTIONS)) {
             response.headers().set(HttpHeaders.ALLOW, ALLOWED_METHODS);
         } else if (request.method().equals(HttpMethod.GET)) {
             response.headers().set(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
-            //response.end(Buffer.buffer(schema));
-            response.end(Buffer.buffer("Hello"));
+            response.end(Buffer.buffer(schemaString));
         }
     }
 }

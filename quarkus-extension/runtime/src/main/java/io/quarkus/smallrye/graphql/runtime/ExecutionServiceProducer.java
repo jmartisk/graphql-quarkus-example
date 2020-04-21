@@ -29,11 +29,13 @@ public class ExecutionServiceProducer {
     }
     
     void initialize() {
-        LOG.error(">>>>> Creating execution service <<<<<<");
-        GraphQLSchema graphQLSchema = Bootstrap.bootstrap(schema);
+        this.graphQLSchema = Bootstrap.bootstrap(schema);
         this.executionService = new ExecutionService(config, graphQLSchema);
     }
     
     @Produces
     ExecutionService executionService;
+    
+    @Produces
+    GraphQLSchema graphQLSchema;
 }

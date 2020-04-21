@@ -33,7 +33,6 @@ public class SmallRyeGraphQLExecutionHandler implements Handler<RoutingContext> 
     
     @Override
     public void handle(final RoutingContext ctx) {
-        LOG.error("===== Executing operation =====");
         HttpServerRequest request = ctx.request();
         HttpServerResponse response = ctx.response();
         
