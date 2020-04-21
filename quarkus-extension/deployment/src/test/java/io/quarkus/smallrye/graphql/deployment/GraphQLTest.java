@@ -50,7 +50,7 @@ public class GraphQLTest {
     }
     
     @Test 
-    public void testPost() {
+    public void testBasicPost() {
         
         String pingRequest = getPayload("{\n" +
         "  ping {\n" +
@@ -70,11 +70,12 @@ public class GraphQLTest {
                 .body(CoreMatchers.containsString("{\"data\":{\"ping\":{\"message\":\"pong\"}}}"));
     }
     
-    //@Test 
-    public void testGet() {
+    @Test 
+    public void testSourcePost() {
         String fooRequest = getPayload("{\n" +
         "  foo {\n" +
         "    message\n" +
+        "    randomNumber\n" +
         "  }\n" +
         "}");
               
@@ -87,7 +88,7 @@ public class GraphQLTest {
                 .assertThat()
                 .statusCode(200)
                 .and()
-                .body(CoreMatchers.containsString("{\"data\":{\"foo\":{\"message\":\"bar\"}}}"));
+                .body(CoreMatchers.containsString("{\"data\":{\"foo\":{\"message\":\"bar\",\"randomNumber\":\"123\"}}}"));
     }
     
     private String getPayload(String query){
