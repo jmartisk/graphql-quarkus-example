@@ -67,10 +67,10 @@ public class SmallRyeGraphQLProcessor {
                                     SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
 
         Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig.allowGet);
-        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.BLOCKING));
+        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.BLOCKING,true));
         
-        Handler<RoutingContext> schemaHandler = recorder.schemaHandler();
-        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.NORMAL));
+        Handler<RoutingContext> schemaHandler = recorder.schemaHandler(smallRyeGraphQLConfig);
+        routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.BLOCKING,true));
 
         return new RequireBodyHandlerBuildItem();
     }

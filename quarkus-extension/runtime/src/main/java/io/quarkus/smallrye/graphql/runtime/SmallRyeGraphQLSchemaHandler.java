@@ -1,6 +1,7 @@
 package io.quarkus.smallrye.graphql.runtime;
 
 import graphql.schema.GraphQLSchema;
+import io.smallrye.graphql.bootstrap.Config;
 import io.smallrye.graphql.execution.SchemaPrinter;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -19,10 +20,16 @@ public class SmallRyeGraphQLSchemaHandler implements Handler<RoutingContext> {
     private static final String ALLOWED_METHODS = "GET, OPTIONS";
     private static final String CONTENT_TYPE = "text/plain; charset=UTF-8";
     
+    private final SchemaPrinter schemaPrinter;
+    
+    public SmallRyeGraphQLSchemaHandler(SmallRyeGraphQLConfig config){
+        schemaPrinter = new SchemaPrinter(new Config(){});
+    }
+    
     @Override
     public void handle(RoutingContext event) {
         GraphQLSchema graphQLSchema = CDI.current().select(GraphQLSchema.class).get();
-        String schemaString = SchemaPrinter.print(graphQLSchema);
+        String schemaString = schemaPrinter.print(graphQLSchema);
         
         HttpServerRequest request = event.request();
         HttpServerResponse response = event.response();

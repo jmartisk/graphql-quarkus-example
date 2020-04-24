@@ -39,7 +39,7 @@
         <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-schema-builder</artifactId>
-            <version>1.0.1</version>
+            <version>${version.smallrye-graphql}</version>
         </dependency>
         
         <!--  Test dependencies -->

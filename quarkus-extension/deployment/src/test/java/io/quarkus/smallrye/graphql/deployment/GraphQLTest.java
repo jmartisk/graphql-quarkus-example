@@ -21,7 +21,7 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.junit.jupiter.api.Assertions;
 
 /**
- * Basic tests. POST and GET
+ * Basic tests. POST
  * @author Phillip Kruger (phillip.kruger@redhat.com)
  */
 public class GraphQLTest {
@@ -30,7 +30,7 @@ public class GraphQLTest {
     @RegisterExtension
     static QuarkusUnitTest test = new QuarkusUnitTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
-                    .addClasses(TestResource.class,TestPojo.class)
+                    .addClasses(TestResource.class,TestPojo.class,TestRandom.class)
                     .addAsResource(new StringAsset(getPropertyAsString()), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
     
@@ -75,20 +75,49 @@ public class GraphQLTest {
         String fooRequest = getPayload("{\n" +
         "  foo {\n" +
         "    message\n" +
-        "    randomNumber\n" +
+        "    randomNumber{\n" +
+        "       value\n" +
+        "    }\n" + 
+        "    list\n" +        
         "  }\n" +
         "}");
-              
+        
         RestAssured.given().when()
                 .accept(MEDIATYPE_JSON)
                 .contentType(MEDIATYPE_JSON)
-                .queryParam("query",fooRequest)
-                .get("/graphql")
+                .body(fooRequest)
+                .post("/graphql")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .and()
-                .body(CoreMatchers.containsString("{\"data\":{\"foo\":{\"message\":\"bar\",\"randomNumber\":\"123\"}}}"));
+                .body(CoreMatchers.containsString("{\"data\":{\"foo\":{\"message\":\"bar\",\"randomNumber\":{\"value\":123.0},\"list\":[\"a\",\"b\",\"c\"]}}}"));
+
+    }
+    
+    @Test 
+    public void testSourcePost2() {
+        String foosRequest = getPayload("{\n" +
+        "  foos {\n" +
+        "    message\n" +
+        "    randomNumber{\n" +
+        "       value\n" +
+        "    }\n" + 
+        "    list\n" +        
+        "  }\n" +
+        "}");
+        
+        RestAssured.given().when()
+                .accept(MEDIATYPE_JSON)
+                .contentType(MEDIATYPE_JSON)
+                .body(foosRequest)
+                .post("/graphql")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .and()
+                .body(CoreMatchers.containsString("{\"data\":{\"foos\":[{\"message\":\"bar\",\"randomNumber\":{\"value\":123.0},\"list\":[\"a\",\"b\",\"c\"]}]}}"));
+
     }
     
     private String getPayload(String query){

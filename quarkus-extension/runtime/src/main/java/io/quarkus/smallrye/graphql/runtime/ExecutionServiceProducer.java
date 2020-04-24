@@ -7,7 +7,6 @@ import io.smallrye.graphql.execution.ExecutionService;
 import io.smallrye.graphql.schema.model.Schema;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
-import org.jboss.logging.Logger;
 
 /**
  * Proxy the execution service
@@ -15,8 +14,6 @@ import org.jboss.logging.Logger;
  */
 @ApplicationScoped
 public class ExecutionServiceProducer {
-    private static final Logger LOG = Logger.getLogger(ExecutionServiceProducer.class);
-    
     private Schema schema;
     private Config config;
     

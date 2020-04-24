@@ -3,6 +3,7 @@ package io.quarkus.smallrye.graphql.runtime;
 import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
+import io.smallrye.graphql.bootstrap.Config;
 import java.util.List;
 
 /**
@@ -54,4 +55,82 @@ public class SmallRyeGraphQLConfig {
     @ConfigItem(defaultValue = "false")
     public boolean printDataFetcherException;
     
+    
+    /**
+     * Include introspection types when creating the schema
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean includeIntrospectionTypesInSchema;
+    
+    /**
+     * Include the schema definition when creating the schema
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean includeSchemaDefinitionInSchema;
+                
+    /**
+     * Include directives when creating the schema
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean includeDirectivesInSchema;
+                
+    /**
+     * Include scalar types when creating the schema
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean includeScalarsInSchema;
+    
+    public Config toGraphQLConfig(){
+        return new Config() {
+            @Override
+            public String getDefaultErrorMessage() {
+                return defaultErrorMessage;
+            }
+
+            @Override
+            public boolean isPrintDataFetcherException() {
+                return printDataFetcherException;
+            }
+
+            @Override
+            public List<String> getBlackList() {
+                return exceptionsBlackList;
+            }
+
+            @Override
+            public List<String> getWhiteList() {
+                return exceptionsWhiteList;
+            }
+
+            @Override
+            public boolean isAllowGet() {
+                return allowGet;
+            }
+
+            @Override
+            public boolean isMetricsEnabled() {
+                return metricsEnabled;
+            }
+
+            @Override
+            public boolean isIncludeIntrospectionTypesInSchema() {
+                return includeIntrospectionTypesInSchema;
+            }
+
+            @Override
+            public boolean isIncludeSchemaDefinitionInSchema() {
+                return includeSchemaDefinitionInSchema;
+            }
+
+            @Override
+            public boolean isIncludeDirectivesInSchema() {
+                return includeDirectivesInSchema;
+            }
+
+            @Override
+            public boolean isIncludeScalarsInSchema() {
+                return includeScalarsInSchema;
+            }
+        };
+    }
 }
