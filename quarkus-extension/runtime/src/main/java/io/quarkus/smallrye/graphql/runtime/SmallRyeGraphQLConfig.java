@@ -80,6 +80,13 @@ public class SmallRyeGraphQLConfig {
     @ConfigItem(defaultValue = "false")
     public boolean includeScalarsInSchema;
     
+    /**
+     * Always include the UI. By default this will only be included in dev and test.
+     * Setting this to true will also include the UI in Prod
+     */
+    @ConfigItem(defaultValue = "false")
+    public boolean alwaysIncludeUI;
+    
     public Config toGraphQLConfig(){
         return new Config() {
             @Override

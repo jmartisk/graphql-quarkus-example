@@ -8,6 +8,8 @@ import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.LaunchModeBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceDirectoryBuildItem;
 import io.quarkus.smallrye.graphql.runtime.ExecutionServiceProducer;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLRecorder;
@@ -64,7 +66,9 @@ public class SmallRyeGraphQLProcessor {
     @BuildStep
     RequireBodyHandlerBuildItem build(BuildProducer<RouteBuildItem> routes,
                                     SmallRyeGraphQLRecorder recorder,
-                                    SmallRyeGraphQLConfig smallRyeGraphQLConfig) {
+                                    SmallRyeGraphQLConfig smallRyeGraphQLConfig,
+                                    LaunchModeBuildItem launchMode,
+                                    BuildProducer<NativeImageResourceDirectoryBuildItem> nativeResourcesProducer) {
 
         Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig.allowGet);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.BLOCKING,true));
@@ -72,6 +76,12 @@ public class SmallRyeGraphQLProcessor {
         Handler<RoutingContext> schemaHandler = recorder.schemaHandler(smallRyeGraphQLConfig);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.BLOCKING,true));
 
+        boolean includeVertxGraphqlUi = launchMode.getLaunchMode().isDevOrTest() || smallRyeGraphQLConfig.alwaysIncludeUI;
+        if (includeVertxGraphqlUi) {
+            // TODO: Add handler for UI
+            // nativeResourcesProducer.produce(new NativeImageResourceDirectoryBuildItem("path/to/static/content"));
+        }
+        
         return new RequireBodyHandlerBuildItem();
     }
     
