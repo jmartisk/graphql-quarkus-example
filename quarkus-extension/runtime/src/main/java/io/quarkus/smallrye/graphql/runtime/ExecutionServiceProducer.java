@@ -4,7 +4,10 @@ import graphql.schema.GraphQLSchema;
 import io.smallrye.graphql.bootstrap.Bootstrap;
 import io.smallrye.graphql.bootstrap.Config;
 import io.smallrye.graphql.execution.ExecutionService;
+import io.smallrye.graphql.metrics.MetricsService;
 import io.smallrye.graphql.schema.model.Schema;
+import org.eclipse.microprofile.metrics.MetricRegistry;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
@@ -26,7 +29,7 @@ public class ExecutionServiceProducer {
     }
     
     void initialize() {
-        this.graphQLSchema = Bootstrap.bootstrap(schema);
+        this.graphQLSchema = Bootstrap.bootstrap(schema, config);
         this.executionService = new ExecutionService(config, graphQLSchema);
     }
     
