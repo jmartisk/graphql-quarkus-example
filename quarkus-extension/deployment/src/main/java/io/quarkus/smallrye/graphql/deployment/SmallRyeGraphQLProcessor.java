@@ -2,6 +2,8 @@ package io.quarkus.smallrye.graphql.deployment;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
+import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
+import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
@@ -9,6 +11,7 @@ import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
+import io.quarkus.deployment.builditem.SystemPropertyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceDirectoryBuildItem;
 import io.quarkus.smallrye.graphql.runtime.ExecutionServiceProducer;
 import io.quarkus.smallrye.graphql.runtime.SmallRyeGraphQLConfig;
@@ -36,32 +39,43 @@ public class SmallRyeGraphQLProcessor {
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
     }
-    
+
     @BuildStep
     BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
         // Make ArC discover the beans marked with the @GraphQlApi qualifier
         return new BeanDefiningAnnotationBuildItem(Annotations.GRAPHQL_API,DotName.createSimple(ApplicationScoped.class.getName()));
     }
-    
+
     @BuildStep
     AdditionalBeanBuildItem additionalBean(){
         return AdditionalBeanBuildItem.builder()
                 .addBeanClass(ExecutionServiceProducer.class)
                 .setUnremovable().build();
     }
-    
+
     @Record(ExecutionTime.STATIC_INIT)
     @BuildStep
     void executionService(CombinedIndexBuildItem combinedIndex,
                         SmallRyeGraphQLRecorder recorder,
+                        Capabilities capabilities,
+                        BuildProducer<SystemPropertyBuildItem> systemProperties,
+                        BuildProducer<UnremovableBeanBuildItem> unremovableBeans,
                         SmallRyeGraphQLConfig smallRyeGraphQLConfig){
-    
+
         IndexView index = combinedIndex.getIndex();
         Schema schema = SchemaBuilder.build(index);
-        
+
         recorder.createExecutionService(smallRyeGraphQLConfig, schema);
+
+        if(capabilities.isCapabilityPresent(Capabilities.METRICS) && smallRyeGraphQLConfig.metricsEnabled) {
+            unremovableBeans.produce(new UnremovableBeanBuildItem(
+                    new UnremovableBeanBuildItem.BeanClassNameExclusion("io.smallrye.metrics.MetricsRegistryImpl")));
+            unremovableBeans.produce(new UnremovableBeanBuildItem(
+                    new UnremovableBeanBuildItem.BeanClassNameExclusion("io.smallrye.metrics.MetricRegistries")));
+            recorder.registerMetrics(schema);
+        }
     }
-            
+
     @Record(ExecutionTime.STATIC_INIT)
     @BuildStep
     RequireBodyHandlerBuildItem build(BuildProducer<RouteBuildItem> routes,
@@ -72,7 +86,7 @@ public class SmallRyeGraphQLProcessor {
 
         Handler<RoutingContext> executionHandler = recorder.executionHandler(smallRyeGraphQLConfig.allowGet);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath, executionHandler, HandlerType.BLOCKING,true));
-        
+
         Handler<RoutingContext> schemaHandler = recorder.schemaHandler(smallRyeGraphQLConfig);
         routes.produce(new RouteBuildItem(smallRyeGraphQLConfig.rootPath + "/schema.graphql", schemaHandler, HandlerType.BLOCKING,true));
 
@@ -81,8 +95,8 @@ public class SmallRyeGraphQLProcessor {
             // TODO: Add handler for UI
             // nativeResourcesProducer.produce(new NativeImageResourceDirectoryBuildItem("path/to/static/content"));
         }
-        
+
         return new RequireBodyHandlerBuildItem();
     }
-    
+
 }

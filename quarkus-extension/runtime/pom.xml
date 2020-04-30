@@ -35,6 +35,11 @@
             <artifactId>quarkus-jsonb</artifactId>    
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-metrics</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>io.smallrye</groupId>
             <artifactId>smallrye-graphql-cdi</artifactId>
             <version>${version.smallrye-graphql}</version>
